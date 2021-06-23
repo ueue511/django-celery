@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block content %}
+<div class="wrap">
+<h2>loto7.loto6検索</h2>
+    <form class="form-row" method="post" action="">
+        {% csrf_token %}
+        {{ submit_token }}
+        <div class="form-group col-md-2" id="form_select" action="{% url 'stock_data_test' %}" method="post">
+            <label for="exampleFormControlSelect1">Loto選択:</label>
+            <select class="form-control" id="exampleFormControlSelect1" name="loto_type">
+                <option selected>......</option>
+                <option value="loto7">loto7</option>
+                <option value="loto6">loto6</option>
+            </select>
+        </div>
+        <div class="form-group col-md-1">
+            <label for="exampleFormControlSelect2">年度:</label>
+            <select class="form-control" id="exampleFormControlSelect2" name="loto_year">
+                <option selected>……</option>
+            </select>
+        </div>
+        <div class="form-group col-md-1">
+            <label for="exampleFormControlSelect3">月:</label>
+            <select class="form-control" id="exampleFormControlSelect3" name="loto_month">
+                <option selected>……</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+
+            </select>
+        </div>
+        <div class="form-group col-md-1">
+            <label for="exampleFormControlSelect4">日:</label>
+            <select class="form-control" id="exampleFormControlSelect4" name="loto_day">
+                <option selected name="days">……</option>
+            </select>
+        </div>
+        <label for="login_bottun_keka"></label>
+        <input type="submit" class="btn btn-primary rounded-pill d-block form-inline" id="login_bottun_keka" value="スクレピング"/>
+    </form>
+    <div class="errorlist"> {{ check_error }} </div>
+{% if data %}
+<div class="table-responsive">
+<table class="table table-dark table-hover table-sm table-bordered text-nowrap">
+    <caption><h2> {{ loto_type }} {{ day2 }}～{{ day1 }} </h2></caption>
+    <thead class="thead-dark">
+    <tr>
+        <th scope="col">抽選回</th>
+        <th scope="col">抽選日時</th>
+        <th scope="col">当選番号</th>
+        <th scope="col">1等</th>
+        <th scope="col">賞金</th>
+        <th scope="col">2等</th>
+        <th scope="col">賞金</th>
+        <th scope="col">3等</th>
+        <th scope="col">賞金</th>
+        <th scope="col">4等</th>
+        <th scope="col">賞金</th>
+        <th scope="col">5等</th>
+        <th scope="col">賞金</th>
+        {% if loto_type == 'loto7' %}
+        <th scope="col">6等</th>
+        <th scope="col">賞金</th>
+        {% endif %}
+    </tr>
+    </thead>
+    {% for item in data %}
+    <tbody>
+    <tr>
+        <td>{{ item.loto_no }}</td>
+        <td>{{ item.day }}</td>
+        <td>{{ item.num }}</td>
+        <td>{{ item.one }}</td>
+        <td>{{ item.one_money }}</td>
+        <td>{{ item.twe }}</td>
+        <td>{{ item.twe_money }}</td>
+        <td>{{ item.three }}</td>
+        <td>{{ item.three_money }}</td>
+        <td>{{ item.foru }}</td>
+        <td>{{ item.foru_money }}</td>
+        <td>{{ item.five }}</td>
+        <td>{{ item.five_money }}</td>
+        {% if loto_type == 'loto7' %}
+        <td>{{ item.six }}</td>
+        <td>{{ item.six_money }}</td>
+        {% endif %}
+    </tr>
+    </tbody>
+    {% endfor %}
+</table>
+</div>
+{% endif %}
+    </content>
+</div>
+<script>
+$(document).ready(function () {
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                 if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                     cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                     break;
+                 }
+            }
+        }
+        return cookieValue;
+    }
+    var csrftoken = getCookie('csrftoken');
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+    $.ajaxSetup({
+        crossDomain: false, // obviates need for sameOrigin test
+        beforeSend: function (xhr, settings) {
+            if (!csrfSafeMethod(settings.type)) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+});
+////ここまでおまじないと思って記述
+//以下Ajax loto6 or 7で年度を変更
+$(function(){
+  $('#exampleFormControlSelect1').on('change', function(){
+    var loto_no = $(this).val();
+
+    $.ajax({
+      url: "{% url 'loto_no' %}",
+      method: "POST",
+      data: {
+        "loto_no": loto_no
+      },
+      dataType: "json",
+      timeout: 1000,
+    }).done(function(json){
+      $('#exampleFormControlSelect2').html('<option selected>……</option>');
+      $.each(json, function(i, value){
+        $('#exampleFormControlSelect2').append('<option>' + value + '</option>');
+      })
+    }).fail(function(XMLHttpRequest, textStatus, errorThrown){
+                console.log(XMLHttpRequest.status);
+                console.log(textStatus);
+                console.log(errorThrown);
+        });
+    });
+});
+//yearでうるう年の判定
+$(function(){
+  $('#exampleFormControlSelect3').on('change', function(){
+    var loto_month = $(this).val();
+    var loto_year =  $('#exampleFormControlSelect2').val();
+
+    $.ajax({
+      url: "{% url 'loto_year' %}",
+      method: "POST",
+      data: {
+        "loto_month": loto_month,
+        "loto_year": loto_year
+      },
+      dataType: "json",
+      timeout: 1000,
+    }).done(function(json){
+      $('#exampleFormControlSelect4').html('<option selected>……</option>');
+      $.each(json, function(i, value){
+        $('#exampleFormControlSelect4').append('<option selected>' + value + '</option>');
+       })
+    }).fail(function(XMLHttpRequest, textStatus, errorThrown){
+                console.log(XMLHttpRequest.status);
+                console.log(textStatus);
+                console.log(errorThrown);
+    });
+  });
+});
+//実行時に進捗バー表示
+$(function(){
+    $('#login_bottun_keka').click(function(){
+        var input_code = document.getElementById("exampleFormControlSelect4").value;
+        if(input_code.length !== 0){
+            dispLoading("処理中...");
+        } else if (input_code == null){
+            ; //何もしない
+        }
+    });
+});
+</script>
+<script src="{% static 'js/pace.min.js' %}"></script>
+{% endblock content %}

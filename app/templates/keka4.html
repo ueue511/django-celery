@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block content %}
+<content class="wrap">
+<h2> 企業コードでの検索　</h2>
+<form id="login_box" method="post" action="">
+    {% csrf_token %}
+    <div class="login_field">
+        <div id="resultGET"></div>
+        <div class="login_name">企業コード{{ text_data }}</div>
+        {{ form.stock_code }}
+        {{ form.stock_code.errors }}
+        <div class="errorlist">{{ chick_error }}</div>
+    </div>
+    <br>
+    <input type="submit" class="btn btn-primary rounded-pill btn-sm mx-auto d-block" id="login_bottun" value="スクレイピング"/>
+    <br>
+    <!-- <p><input type="hidden" name="next" value="{{ next }}" /></p> -->
+    <div class="form-row">
+        <div class="form-group col-md-4 ml-auto" id="form_select" action="{% url 'stock_data_test' %}" method="post">
+            <label for="exampleFormControlSelect1">企業コード:</label>
+            <select class="form-control" id="exampleFormControlSelect1" name="stock_data_test">
+                <option selected>…code…</option>
+                {% for code_one in code_all %}
+                <option value="{{ code_one.stock_code }}">{{ code_one.stock_code }}   {{ code_one.stock_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group col-md-2">
+            <label for="exampleFormControlSelect6">年度:</label>
+            <select class="form-control" id="exampleFormControlSelect6">
+                <option selected>…year…</option>
+            </select>
+        </div>
+    </div>
+</form>
+<div class="container"></div>
+</content>
+<script>
+$(document).ready(function () {
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                 if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                     cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                     break;
+                 }
+            }
+        }
+        return cookieValue;
+    }
+    var csrftoken = getCookie('csrftoken');
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+    $.ajaxSetup({
+        crossDomain: false, // obviates need for sameOrigin test
+        beforeSend: function (xhr, settings) {
+            if (!csrfSafeMethod(settings.type)) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+});
+////ここまでおまじないと思って記述
+//以下Ajax
+$(function(){
+    $('#exampleFormControlSelect1').on('change', function(){
+        var stock_code = $(this).val();
+
+        $.ajax({
+            url: "{% url 'stock_data_test' %}",
+            method: "POST",
+            data: {
+                "stock_code": stock_code
+            },
+            cache: false,    // リクエストをキャッシュしない
+            dataType: "json",
+            timeout: 1000,
+        }).done(function(json){
+            $('#exampleFormControlSelect6').html('<option selected>…year…</option>');
+            $.each(json, function(i, value){
+                $('#exampleFormControlSelect6').append('<option>' + value + '</option>');
+            })
+        }).fail(function(XMLHttpRequest, textStatus, errorThrown){
+                console.log(XMLHttpRequest.status);
+                console.log(textStatus);
+                console.log(errorThrown);
+        });
+    });
+});
+//年度選択時の着火
+$(function(){
+    $('#exampleFormControlSelect6').on('change', function(){
+        var stock_year = $(this).val()
+        var stock_code = $('#exampleFormControlSelect1').val();
+
+       $.ajax({
+           url: "{% url 'stock_chart_test' %}",
+           method: "POST",
+           data: {
+               "stock_code": stock_code,
+               "stock_year": stock_year
+           },
+           cache: false,    // リクエストをキャッシュしない
+           timeout: 1000,
+        }).done(function(data){
+            $(".container").html('')
+            $(".container").append(data)
+       });
+    });
+});
+
+//実行時に進捗バー表示
+$(function(){
+    $('#login_bottun').click(function(){
+        var input_code = document.getElementById("id_stock_code").value;
+        if(input_code.length !== 0){
+            dispLoading("処理中...");
+        } else if (input_code == null){
+            ; //何もしない
+        }
+    });
+});
+
+
+
+ </script>
+<script src="{% static 'js/pace.min.js' %}"></script>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    {% endblock content %}

@@ -22,11 +22,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
-      - POSTGRES_USER=mysite
-      - POSTGRES_PASSWORD=mysite
-      - POSTGRES_DB=mysite_dev
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=iAdvrKqC
+      - POSTGRES_DB=test_any
   redis:
-    image: "redis:alpine"
+    image: "redis:buster"
 
 volumes:
   postgres_data:

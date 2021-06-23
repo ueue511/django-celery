@@ -1,5 +1,5 @@
 # pull official base image
-FROM python:3.8.0-alpine
+FROM python:3.7.5-alpine
 
 # set work directory
 WORKDIR /usr/src/app
@@ -18,6 +18,8 @@ RUN apk update \
     && apk add postgresql-dev gcc python3-dev musl-dev
 
 # install dependencies
+RUN apk add build-base libffi-dev git chromium chromium-chromedriver ttf-freefont
+RUN apk --no-cache add gcc libc-dev libxml2-dev libxslt-dev jpeg-dev
 RUN pip install --upgrade pip
 COPY ./requirements.txt /usr/src/app/requirements.txt
 RUN pip install -r requirements.txt

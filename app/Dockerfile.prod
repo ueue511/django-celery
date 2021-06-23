@@ -3,7 +3,7 @@
 ###########
 
 # pull official base image
-FROM python:3.8.0-alpine as builder
+FROM python:3.6-alpine as builder
 
 # set work directory
 WORKDIR /usr/src/app
@@ -11,10 +11,21 @@ WORKDIR /usr/src/app
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
+# ENV DJANGO_SETTINGS_MODULE=settings_staging_dev.py
+# ENV LIBRARY_PATH=/lib:/usr/local/lib
 
 # install psycopg2 dependencies
 RUN apk update \
-    && apk add postgresql-dev gcc python3-dev musl-dev
+    && apk add --virtual .build-tools gcc python3-dev musl-dev  \
+    && apk add postgresql-dev
+RUN apk del .build-tools
+
+# install pillow
+# RUN apk add --no-cache jpeg-dev zlib-dev
+# RUN apk add --no-cache --virtual .build-deps build-base linux-headers \
+#    && pip install pip --upgrade \
+#    && pip install pillow==7.2.0 \
+#    && apk del .build-deps
 
 # lint
 RUN pip install --upgrade pip
@@ -24,15 +35,48 @@ COPY . /usr/src/app/
 
 # install dependencies
 COPY ./requirements.txt .
+RUN apk add --no-cache --virtual .build-django-toole \
+            curl \
+            freetype-dev \
+            fribidi-dev \
+            harfbuzz-dev \
+            jpeg-dev \
+            lcms2-dev \
+            openjpeg-dev \
+            tcl-dev \
+            tiff-dev \
+            tk-dev \
+            udev \
+            ttf-freefont \
+            libc-dev \
+            make \
+            git \
+            bash \
+            sudo \
+            libxslt-dev \
+            libxml2-dev \
+            libffi-dev \
+            libgcc \
+            libjpeg-turbo-dev \
+            linux-headers \
+            libjpeg \
+            musl-dev \
+            chromium \
+            openssl-dev \
+            chromium-chromedriver \
+            gfortran \
+            gcc \
+            g++ \
+            openblas-dev \
+            zlib-dev
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requirements.txt
-
 
 #########
 # FINAL #
 #########
 
 # pull official base image
-FROM python:3.8.0-alpine
+FROM python:3.6-alpine
 
 # create directory for the app user
 RUN mkdir -p /home/app
@@ -54,11 +98,40 @@ RUN mkdir $APP_HOME/mediafiles
 WORKDIR $APP_HOME
 
 # install dependencies
-RUN apk update && apk add libpq
+RUN apk update\
+    && apk add libpq \
+    chromium \
+    chromium-chromedriver \
+    freetype-dev \
+    fribidi-dev \
+    gcc \
+    g++ \
+    gfortran \
+    # google-chrome-stable \
+    harfbuzz-dev \
+    jpeg-dev \
+    lcms2-dev \
+    libc-dev \
+    linux-headers \
+    musl-dev \
+    openjpeg-dev \
+    openssl-dev \
+    tcl-dev \
+    tiff-dev \
+    ttf-freefont \
+    tk-dev \
+    udev \
+    zlib-dev
 COPY --from=builder /usr/src/app/wheels /wheels
 COPY --from=builder /usr/src/app/requirements.txt .
-RUN pip install --upgrade pip
+# RUN pip install --upgrade pip
 RUN pip install --no-cache /wheels/*
+RUN pip install cython
+RUN pip install numpy==1.14.3
+RUN pip install 'pandas<0.21.0'
+
+# point driver path to /usr/bin/chromedriver
+# ENV PATH = "/usr/local/lib/python3.7/site-packages/chromedriver_binary/chromedriver：$ {PATH}"
 
 # copy entrypoint-prod.sh
 COPY ./entrypoint.prod.sh $APP_HOME

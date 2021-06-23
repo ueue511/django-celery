@@ -5,7 +5,7 @@ services:
     build:
       context: ./app
       dockerfile: Dockerfile.prod
-    command: gunicorn mysite.wsgi:application --bind 0.0.0.0:8000
+    command: gunicorn --bind 0.0.0.0:8000 test_any.wsgi
     volumes:
       - static_volume:/home/app/web/staticfiles
       - media_volume:/home/app/web/mediafiles
@@ -17,8 +17,20 @@ services:
       - db
       - redis
   worker:
-    build: ./celery-queue
+    build:
+      context: ./app
+      dockerfile: Dockerfile.prod
+      shm_size: 2g
+    shm_size: 2g
+    # build: ./celery-queue
+    command: celery -A test_any worker --loglevel=info
+    volumes:
+      - static_volume:/home/app/web/staticfiles
+      - media_volume:/home/app/web/mediafiles
+    env_file:
+      - ./.env.prod
     depends_on:
+      - db
       - redis
   db:
     image: postgres:12.0-alpine
@@ -34,9 +46,22 @@ services:
       - static_volume:/home/app/web/staticfiles
       - media_volume:/home/app/web/mediafiles
     ports:
-      - 1337:80
+      - 80:80
     depends_on:
       - web
+  # monitor:
+  #   build:
+  #     context: ./app
+  #     dockerfile: Dockerfile.prod
+  #   command: celery flower --broker=redis://redis:6379/0 --port=5555
+  #   volumes:
+  #     - static_volume:/home/app/web/staticfiles
+  #     - media_volume:/home/app/web/mediafiles
+  #   env_file:
+  #     - ./.env.prod
+  #   depends_on:
+  #     - db
+  #     - redis
 
 volumes:
   postgres_data:
