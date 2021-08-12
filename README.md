@@ -1,20 +1,13 @@
 # Django-docker-starter
 
-*  此專案用到 Django + gunicorn + nginx + postgres + redis + celery + docker
-* 可再加上flower
-* Django版本為2.2.11
-### demo的API
-* `/`：計算使用此頁面的次數(by redis) 和 member列表(by postgres)
-* `/addmember/<name>`：建立member和其名稱 by postgres
-* `/add/<int>/<int>`：執行兩數相加的任務 by celery
+* 環境 Django + gunicorn + nginx + postgres + redis + celery + docker
+* worker監視 flower
+* Django 2.2.11
 
-### 開發指令
-* 更改python程式會自動重build環境
-#### 重啟指令，建立新的containers
+#### 開発環境
 docker-compose up -d --build
-* 啟動在 127.0.0.1:8000
-#### 關閉指令，移除之前建立的containers
-docker-compose down -v
+127.0.0.1:8000
+
 ##### 在container中下建立admin的指令
 docker-compose exec web python manage.py admin
 ##### 查看log
